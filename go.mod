@@ -1,12 +1,14 @@
 module github.com/burdzwastaken/osquery-zip-table
 
-go 1.18
+go 1.20
 
-require github.com/osquery/osquery-go v0.0.0-20210622151333-99b4efa62ec5
+require github.com/osquery/osquery-go v0.0.0-20230427204930-ff54f5f08296
 
 require (
-	github.com/Microsoft/go-winio v0.4.9 // indirect
-	github.com/apache/thrift v0.13.1-0.20200603211036-eac4d0c79a5f // indirect
+	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/apache/thrift v0.18.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/tools v0.8.0 // indirect
 )
