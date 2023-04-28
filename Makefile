@@ -7,7 +7,7 @@ all: build
 
 build:
 	echo "$(shell pwd)/build/osquery-zip-table-extension.ext" > /tmp/extensions.load
-	$(GOBUILD) -i -o build/osquery-zip-table-extension.ext .
+	$(GOBUILD) -o build/osquery-zip-table-extension.ext .
 
 osqueryd: build
 	osqueryd \
