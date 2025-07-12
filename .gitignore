@@ -1,3 +1,4 @@
 vendor/
 build/
+osquery-zip-table
 osquery-zip-table-extension.ext
