@@ -18,7 +18,6 @@ func TestSearchZipFile_NoConstraint(t *testing.T) {
 }
 
 func TestSearchZipFile_Valid(t *testing.T) {
-	// Create temp zip file
 	tmpFile, err := os.CreateTemp("", "pkgzip-*.zip")
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
