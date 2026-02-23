@@ -31,8 +31,7 @@ func main() {
 		log.Fatalf("Error creating extension: %s\n", err)
 	}
 
-	// create and register s3 config plugin.
-	// requires configuration to be available through environment variables.
+	// register the zip table plugin
 	server.RegisterPlugin(zip.New())
 
 	// run the extension server

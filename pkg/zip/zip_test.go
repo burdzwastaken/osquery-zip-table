@@ -3,6 +3,7 @@ package zip
 import (
 	"archive/zip"
 	"context"
+	"errors"
 	"os"
 	"strconv"
 	"testing"
@@ -12,8 +13,8 @@ import (
 
 func TestSearchZipFile_NoConstraint(t *testing.T) {
 	_, err := searchZipFile(context.Background(), table.QueryContext{Constraints: map[string]table.ConstraintList{}})
-	if err == nil {
-		t.Fatal("expected error for missing zip_file constraint")
+	if !errors.Is(err, ErrMissingConstraint) {
+		t.Fatalf("expected ErrMissingConstraint, got %v", err)
 	}
 }
 
@@ -22,7 +23,7 @@ func TestSearchZipFile_Valid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() { _ = os.Remove(tmpFile.Name()) }() //nolint:gosec // temp file created by os.CreateTemp
 
 	w := zip.NewWriter(tmpFile)
 	entries := map[string][]byte{
@@ -41,7 +42,9 @@ func TestSearchZipFile_Valid(t *testing.T) {
 	if err := w.Close(); err != nil {
 		t.Fatalf("failed to finalize zip: %v", err)
 	}
-	tmpFile.Close()
+	if err := tmpFile.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
 
 	qc := table.QueryContext{
 		Constraints: map[string]table.ConstraintList{

@@ -5,11 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 
 	"github.com/osquery/osquery-go/plugin/table"
 )
+
+// ErrMissingConstraint is returned when the required zip_file constraint is not provided.
+var ErrMissingConstraint = errors.New("the zip table requires that you specify a constraint WHERE zip_file =")
 
 func New() *table.Plugin {
 	columns := []table.ColumnDefinition{
@@ -34,50 +36,33 @@ func New() *table.Plugin {
 func searchZipFile(ctx context.Context, queryContext table.QueryContext) ([]map[string]string, error) {
 	f, ok := queryContext.Constraints["zip_file"]
 	if !ok || len(f.Constraints) == 0 {
-		return nil, errors.New("The zip table requires that you specify a constraint WHERE zip_file =")
+		return nil, ErrMissingConstraint
 	}
 	where := f.Constraints[0].Expression
 	read, err := zip.OpenReader(where)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to open zip file %s: %w", where, err)
 	}
-	defer read.Close()
+	defer func() { _ = read.Close() }()
 
-	var resp []map[string]string
+	resp := make([]map[string]string, 0, len(read.File))
 	for _, file := range read.File {
-		if err := listFiles(file); err != nil {
-			return nil, fmt.Errorf("reading file %s from zip %s: %w", file.Name, where, err)
-		}
 		m := make(map[string]string, 14)
 		m["zip_file"] = where
 		m["file_name"] = file.Name
 		m["comment"] = file.Comment
 		m["modified"] = file.Modified.String()
 		m["non_utf8"] = strconv.FormatBool(file.NonUTF8)
-		m["compressed_size"] = strconv.Itoa(int(file.CompressedSize64))
-		m["uncompressed_size"] = strconv.Itoa(int(file.UncompressedSize64))
-		m["crc32"] = strconv.Itoa(int(file.CRC32))
-		m["method"] = strconv.Itoa(int(file.Method))
-		m["flags"] = strconv.Itoa(int(file.Flags))
-		m["creator_version"] = strconv.Itoa(int(file.CreatorVersion))
-		m["reader_version"] = strconv.Itoa(int(file.ReaderVersion))
-		m["external_attrs"] = strconv.Itoa(int(file.ExternalAttrs))
+		m["compressed_size"] = strconv.FormatUint(file.CompressedSize64, 10)
+		m["uncompressed_size"] = strconv.FormatUint(file.UncompressedSize64, 10)
+		m["crc32"] = strconv.FormatUint(uint64(file.CRC32), 10)
+		m["method"] = strconv.FormatUint(uint64(file.Method), 10)
+		m["flags"] = strconv.FormatUint(uint64(file.Flags), 10)
+		m["creator_version"] = strconv.FormatUint(uint64(file.CreatorVersion), 10)
+		m["reader_version"] = strconv.FormatUint(uint64(file.ReaderVersion), 10)
+		m["external_attrs"] = strconv.FormatUint(uint64(file.ExternalAttrs), 10)
 		m["extra_length"] = strconv.Itoa(len(file.Extra))
 		resp = append(resp, m)
 	}
 	return resp, nil
-}
-
-func listFiles(file *zip.File) error {
-	reader, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("failed to open zip entry %s: %w", file.Name, err)
-	}
-	defer reader.Close()
-
-	if _, err := io.Copy(io.Discard, reader); err != nil {
-		return fmt.Errorf("failed to read zip entry %s: %w", file.Name, err)
-	}
-	return nil
 }
